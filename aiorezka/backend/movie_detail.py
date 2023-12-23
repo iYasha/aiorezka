@@ -1,28 +1,34 @@
-from typing import TYPE_CHECKING, List, Iterable, Optional
+import asyncio
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 from aiorezka.factories import MovieDetailFactory
-from aiorezka.schemas import MovieDetail
+from aiorezka.schemas import Movie, MovieDetail
 
 if TYPE_CHECKING:
     from aiorezka.api import RezkaAPI
 
 
 class RezkaMovieDetail:
-
-    def __init__(self, api_client: 'RezkaAPI'):
+    def __init__(self, api_client: "RezkaAPI") -> None:
         self.api_client = api_client
 
-    async def many(self, movie_urls: List[str]) -> Iterable[MovieDetail]:
+    async def many(self, movies: Iterable[Movie]) -> Iterable[MovieDetail]:
+        tasks = []
+        for movie in movies:
+            tasks.append(self.get(movie.page_url))
+        return await asyncio.gather(*tasks)
+
+    async def many_from_urls(self, movie_urls: List[str] = None) -> Iterable[MovieDetail]:
+        tasks = []
         for movie_url in movie_urls:
-            yield await self.get(movie_url)
+            tasks.append(self.get(movie_url))
+        return await asyncio.gather(*tasks)
 
     async def get(self, movie_page_url: str) -> Optional[MovieDetail]:
         async with self.api_client.http_session.get(
             movie_page_url,
-            headers=self.api_client.fake_headers
+            headers=self.api_client.fake_headers,
         ) as response:
-            if not self.api_client.is_success(response.status):
-                return None
             html = await response.text()
             factory = MovieDetailFactory(movie_page_url, html)
             return MovieDetail.from_factory(factory)

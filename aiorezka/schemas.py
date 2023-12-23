@@ -1,11 +1,8 @@
-from typing import Optional, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from pydantic import BaseModel
 
 from aiorezka.enums import MovieType
-
-from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from aiorezka.factories import MovieDetailFactory
@@ -35,7 +32,7 @@ class FranchiseRelatedMovie(BaseModel):
     title: str
     franchise_index: int
     release_year: str
-    rating: float
+    rating: Optional[float] = None
     movie_page_url: str
 
 
@@ -53,7 +50,7 @@ class MovieDetail(BaseModel):
     franchise_related_movies: List[FranchiseRelatedMovie]
 
     @classmethod
-    def from_factory(cls, factory: 'MovieDetailFactory') -> 'MovieDetail':
+    def from_factory(cls, factory: "MovieDetailFactory") -> "MovieDetail":
         return MovieDetail(
             movie_id=factory.movie_id,
             default_audio_track=factory.default_audio_track,
