@@ -7,9 +7,6 @@ from typing import Any, Optional
 clear = "cls" if sys.platform == "win32" else "clear"
 
 
-only_one_thread_lock = threading.Lock()
-
-
 class StatsThread(threading.Thread):
     total_responses: int = 0
     error_responses: int = 0
