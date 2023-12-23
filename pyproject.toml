@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "aiorezka"
+version = "0.1.0"
+description = ""
+authors = ["iYasha <33287747+iYasha@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pydantic = "^2.5.3"
+aiohttp = "^3.9.1"
+faker = "^21.0.0"
+beautifulsoup4 = "^4.12.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
