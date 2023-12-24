@@ -1,7 +1,8 @@
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel
 
+from aiorezka.attributes import BaseAttribute
 from aiorezka.enums import MovieType
 
 if TYPE_CHECKING:
@@ -44,10 +45,15 @@ class MovieDetail(BaseModel):
     poster_url: str
     description: Optional[str] = None
     movie_type: MovieType
-    attributes: List[Dict[str, str]]
+    attributes: List[BaseAttribute]
     seasons: List[MovieSeason]
     audio_tracks: List[AudioTrack]
     franchise_related_movies: List[FranchiseRelatedMovie]
+
+    class Config:
+        json_encoders = {
+            BaseAttribute: lambda v: v.to_dict(),
+        }
 
     @classmethod
     def from_factory(cls, factory: "MovieDetailFactory") -> "MovieDetail":

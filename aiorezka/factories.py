@@ -1,12 +1,63 @@
 import re
 from functools import cached_property
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
+from aiorezka.attributes import (
+    AttributeParseError,
+    BaseAttribute,
+    IntAttribute,
+    LinkAttribute,
+    PersonAttribute,
+    RatingAttribute,
+    TextAttribute,
+    TopListAttribute,
+    _lazy_attr,
+)
 from aiorezka.enums import MovieType
 from aiorezka.schemas import AudioTrack, FranchiseRelatedMovie, MovieSeason
 from aiorezka.utils import get_movie_id_from_url
+
+
+class MovieAttributeFactory:
+    attr_mapping = {
+        "Рейтинги": _lazy_attr("ratings", RatingAttribute),
+        "Входит в списки": _lazy_attr("top_lists", TopListAttribute),
+        "Слоган": _lazy_attr("tagline", TextAttribute),
+        "Дата выхода": _lazy_attr("release_date", TextAttribute),
+        "Страна": _lazy_attr("production_country", TextAttribute),
+        "Режиссер": _lazy_attr("directors", PersonAttribute),
+        "Год": _lazy_attr("release_year", IntAttribute),
+        "Время": _lazy_attr("duration", TextAttribute),
+        "Возраст": _lazy_attr("age_limit", TextAttribute),
+        "В качестве": _lazy_attr("quality", TextAttribute),
+        "В ролях актеры": _lazy_attr("actors", PersonAttribute),
+        "Из серии": _lazy_attr("categories", LinkAttribute),
+        "В переводе": _lazy_attr("translations", TextAttribute),
+        "Жанр": _lazy_attr("genres", LinkAttribute),
+    }
+
+    def __init__(self, soup: BeautifulSoup) -> None:
+        self.soup = soup
+
+    @cached_property
+    def attributes(self) -> List[BaseAttribute]:
+        attributes = []
+        for attr_group in self.soup.find(attrs={"class": "b-post__info"}).find_all("tr"):
+            name_value_set = attr_group.find_all("td")
+            if len(name_value_set) == 1:  # Actors has different structure
+                name_attr = name_value_set[0].find("span", attrs={"class": "l"})
+                value = name_value_set[0]
+            else:
+                name_attr = name_value_set[0]
+                value = name_value_set[1]
+            name = name_attr.text.strip().replace(":", "")
+            attribute = self.attr_mapping.get(name, None)
+            if attribute is None:
+                raise AttributeParseError(f"Unknown attribute: {name}")
+            attributes.append(attribute(name, value))
+        return attributes
 
 
 class MovieDetailFactory:
@@ -60,7 +111,12 @@ class MovieDetailFactory:
         for movie in franchise_related_movie_items:
             title_block = movie.find(attrs={"class": "title"})
 
-            # Example: <a href="https://hdrezka320fkk.org/films/fiction/23757-chelovek-pauk-vozvraschenie-domoy-2017.html">Человек-паук: Возвращение домой</a>
+            """
+            Example:
+            <a href="https://hdrezka320fkk.org/films/fiction/23757-chelovek-pauk-vozvraschenie-domoy-2017.html">
+                Человек-паук: Возвращение домой
+            </a>
+            """
             franchise_title = title_block.text.strip()
             if "current" in movie.get("class"):
                 movie_page_url = self.page_url
@@ -87,21 +143,8 @@ class MovieDetailFactory:
         return franchise_related_movies
 
     @cached_property
-    def attributes(self) -> List[Dict[str, str]]:
-        # get attributes from table
-        attributes = []
-        for attr_group in self.soup.find(attrs={"class": "b-post__info"}).find_all("tr"):
-            key = attr_group.find(attrs={"class": "l"})
-            value = attr_group.text
-            if key:
-                value = value.replace(key.text, "")
-            attributes.append(
-                {
-                    "key": key.text.strip().replace(":", "", 1) if key else None,
-                    "value": value.strip(),
-                },
-            )
-        return attributes
+    def attributes(self) -> List[BaseAttribute]:
+        return MovieAttributeFactory(self.soup).attributes
 
     @cached_property
     def available_audio_tracks(self) -> List[AudioTrack]:
