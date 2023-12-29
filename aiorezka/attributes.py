@@ -1,9 +1,9 @@
 import abc
 from collections import namedtuple
 from functools import cached_property
-from typing import Dict, Generator, List, Type, TypeVar
+from typing import Dict, Generator, List, Type, TypeVar, Union
 
-from bs4 import Tag
+from bs4 import BeautifulSoup, Tag
 
 _T = TypeVar("_T")
 
@@ -16,11 +16,15 @@ class AttributeParseError(ValueError):
 
 
 class BaseAttribute:
+    __slots__ = ("original_name", "value_tag")
     _attr_name: str = None
 
-    def __init__(self, name: str, value: Tag) -> None:
+    def __init__(self, name: str, value: Union[str, Tag]) -> None:
         self.original_name = name
-        self.value_tag = value
+        if isinstance(value, str):
+            self.value_tag = BeautifulSoup(value, "html.parser")
+        else:
+            self.value_tag = value
 
     @abc.abstractmethod
     def value(self) -> any:
@@ -66,10 +70,12 @@ class IntAttribute(TextAttribute):
 class RatingAttribute(BaseAttribute):
     @cached_property
     def value(self) -> Dict[str, float]:
-        ratings = self.value_tag.find_all("span", attrs={"class": "b-post__info_rates"})
+        ratings = self.value_tag.find_all("span")
         if not ratings:
             raise AttributeParseError(f"No ratings found in {self.value_tag}")
-        return {x.find("a").text.strip(): float(x.find("span").text.strip()) for x in ratings}
+        return {
+            ratings[x].text.split(":")[0].strip(): float(ratings[x + 1].text.strip()) for x in range(0, len(ratings), 2)
+        }
 
 
 class TopListAttribute(BaseAttribute):

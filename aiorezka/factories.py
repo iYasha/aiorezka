@@ -4,10 +4,10 @@ from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
+import aiorezka
 from aiorezka.attributes import (
     AttributeParseError,
     BaseAttribute,
-    IntAttribute,
     LinkAttribute,
     PersonAttribute,
     RatingAttribute,
@@ -28,7 +28,7 @@ class MovieAttributeFactory:
         "Дата выхода": _lazy_attr("release_date", TextAttribute),
         "Страна": _lazy_attr("production_country", TextAttribute),
         "Режиссер": _lazy_attr("directors", PersonAttribute),
-        "Год": _lazy_attr("release_year", IntAttribute),
+        "Год": _lazy_attr("release_year", TextAttribute),
         "Время": _lazy_attr("duration", TextAttribute),
         "Возраст": _lazy_attr("age_limit", TextAttribute),
         "В качестве": _lazy_attr("quality", TextAttribute),
@@ -56,6 +56,10 @@ class MovieAttributeFactory:
             attribute = self.attr_mapping.get(name, None)
             if attribute is None:
                 raise AttributeParseError(f"Unknown attribute: {name}")
+            if aiorezka.use_cache:  # Because bs4.Tag object is not pickable, and if we use cache, we need to pickle it
+                # So simple way to pass string to attribute and then parse it again to soup
+                # https://stackoverflow.com/questions/24563148/beautifulsoup-object-will-not-pickle-causes-interpreter-to-silently-crash
+                value = value.decode()
             attributes.append(attribute(name, value))
         return attributes
 

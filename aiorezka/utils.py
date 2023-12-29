@@ -2,6 +2,10 @@ import asyncio
 import re
 from typing import Any, Optional, Tuple
 
+from aiorezka.logger import get_logger
+
+logger = get_logger("aiorezka.utils.retry")
+
 
 def get_movie_id_from_url(movie_page_url: str) -> Optional[int]:
     assert movie_page_url is not None, "movie_page_url is required"
@@ -27,7 +31,9 @@ def retry(
                     if retry_no == retries - 1:
                         raise e
                     retry_delay = delay * (backoff ** (retry_no + 1))
-                    print(f"Exception {e} occurred, retrying in {retry_delay} seconds. Retry {retry_no + 1}/{retries}")
+                    logger.info(
+                        f"Exception {e} occurred, retrying in {retry_delay} seconds. Retry {retry_no + 1}/{retries}",
+                    )
                     await asyncio.sleep(retry_delay)
 
         return wrapper

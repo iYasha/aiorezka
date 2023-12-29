@@ -11,7 +11,10 @@ pydantic = "^2.5.3"
 aiohttp = "^3.9.1"
 beautifulsoup4 = "^4.11.1"
 faker = "^21.0.0"
+aiofiles = { version="^23.2.1", optional=true }
 
+[tool.poetry.extras]
+request_cache = ["aiofiles"]
 
 [build-system]
 requires = ["poetry-core"]

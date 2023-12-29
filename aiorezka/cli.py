@@ -4,6 +4,8 @@ import threading
 import time
 from typing import Any, Optional
 
+from aiorezka.logger import get_logger
+
 clear = "cls" if sys.platform == "win32" else "clear"
 
 
@@ -11,6 +13,7 @@ class StatsThread(threading.Thread):
     total_responses: int = 0
     error_responses: int = 0
     _thread_instance: Optional["StatsThread"] = None
+    logger = get_logger("aiorezka.cli.StatsThread")
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -38,9 +41,13 @@ class StatsThread(threading.Thread):
         response_time = time.time() - start_time
         rps = self.success_responses / response_time if response_time else 0
         os.system(clear)
-        sys.stdout.write(f"[{self.name}][{self.success_responses} requests in {response_time:.2f}s] {rps:.2f} rps\n")
+        self.logger.info(
+            f"[{self.name}] [{self.success_responses} requests in {response_time:.2f}s] {rps:.2f} rps",
+        )
         if detailed:
-            sys.stdout.write(f"[{self.error_responses} errors]\n")
+            self.logger.info(f"[{self.total_responses} total requests]")
+            self.logger.info(f"[{self.success_responses} success]")
+            self.logger.info(f"[{self.error_responses} errors]")
 
     def run(self) -> None:
         start_time = time.time()
