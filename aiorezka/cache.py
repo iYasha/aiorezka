@@ -94,7 +94,7 @@ class DiskCacheThreadProvider(threading.Thread):
     metadata_extension = ".metadata"
     logger = get_logger("aiorezka.cache.DiskCacheThreadProvider")
 
-    def __init__(self, cache: QueryCache, *, rebuild_cache: bool = True) -> None:
+    def __init__(self, cache: QueryCache, *, cache_rebuild_on_start: bool = True) -> None:
         super().__init__()
         self.cache = cache
 
@@ -102,7 +102,7 @@ class DiskCacheThreadProvider(threading.Thread):
         self.sleep = threading.Event()
 
         self.already_stored = set()
-        self.cache_rebuilt = not rebuild_cache
+        self.cache_rebuilt = not cache_rebuild_on_start
 
     async def store_metadata(self, cache_key: str, value: TTLObject) -> None:
         metadata_path = os.path.join(self.cache.disk_cache_path, f"{cache_key}{self.metadata_extension}")

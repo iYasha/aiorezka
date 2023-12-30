@@ -52,6 +52,81 @@ aiorezka.max_retry = 5
 aiorezka.retry_delay = 2
 ```
 
+### Cache configuration
+You can configure cache for requests. By default, it will use `aiorezka.cache.QueryCache` + `aiorezka.cache.DiskCacheThreadProvider` with 1 day TTL.
+Cache will periodically save to disk, so you can use it between restarts.
+
+_It's recommended to use cache, because it will reduce load on Rezka API._
+
+#### use_cache
+Enable or disable cache. By default, it's enabled.
+```python
+import aiorezka
+
+aiorezka.use_cache = False  # disable cache
+```
+or use environment variable `REZKA_USE_CACHE`
+
+#### cache_directory
+Directory where cache will be stored. By default, it's `/tmp/aiorezka_cache`.
+```python
+import aiorezka
+
+aiorezka.cache_directory = '/tmp/aiorezka_cache'
+```
+or use environment variable `REZKA_CACHE_DIRECTORY`
+
+#### memcache_max_len
+Max number of items in memory cache. When it's reached, it will be saved to disk. 
+
+By default, it's 1000.
+```python
+import aiorezka
+
+aiorezka.memcache_max_len = 1000
+```
+or use environment variable `REZKA_MEMCACHE_MAX_LEN`
+
+#### cache_ttl
+TTL for cache objects.
+
+By default, it's 1 day.
+```python
+import aiorezka
+
+aiorezka.cache_ttl = 60 * 60 * 24  # 1 day
+```
+or use environment variable `REZKA_CACHE_TTL`
+
+#### max_open_files
+Max number of open files for cache. It's used for `aiorezka.cache.DiskCacheThreadProvider`. When app starts cache will be rebuilt on disk, so it will open a lot of files to check if they are expired.
+
+By default, it's 5000.
+```python
+import aiorezka
+
+aiorezka.max_open_files = 5000
+```
+or use environment variable `REZKA_MAX_OPEN_FILES`
+
+You can disable cache rebuild on start, then TTL will be ignored.
+```python
+from aiorezka.api import RezkaAPI
+
+async def main():
+    async with RezkaAPI(cache_rebuild_on_start=False) as api:
+        pass
+```
+
+### Logging configuration
+You can configure logging for aiorezka. By default, it will use `logging.INFO` level.
+```python
+import aiorezka
+
+aiorezka.log_level = "DEBUG"
+```
+or use environment variable `REZKA_LOG_LEVEL`
+
 ## Debugging
 ### Measure RPS
 Measure requests per second, use it only for debug purposes.

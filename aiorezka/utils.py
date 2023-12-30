@@ -31,6 +31,16 @@ def retry(
     backoff: int = 2,
     exceptions: Tuple[Type[Exception]] = (ClientError,),
 ) -> callable:
+    """
+    Retry decorator with exponential backoff.
+
+    :param retries: int - number of retries
+    :param delay: int - delay in seconds
+    :param backoff: int - backoff multiplier
+    :param exceptions: tuple - exceptions to catch and retry. Default: (aiohttp.ClientError,) + (aiohttp.ClientResponseError, )
+    :return: callable
+    """
+
     handled_exceptions = exceptions + (HTTPException,)
 
     def decorator(func: callable) -> callable:
