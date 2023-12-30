@@ -16,7 +16,7 @@ from aiorezka.attributes import (
     _lazy_attr,
 )
 from aiorezka.enums import MovieType
-from aiorezka.schemas import AudioTrack, FranchiseRelatedMovie, MovieSeason
+from aiorezka.schemas import AudioTrack, FranchiseRelatedMovie, Movie, MovieSeason
 from aiorezka.utils import get_movie_id_from_url
 
 
@@ -182,3 +182,31 @@ class MovieDetailFactory:
             return int(movie_id), int(default_audio_track)
         else:
             return get_movie_id_from_url(self.page_url), None
+
+
+class MovieFactory:
+    def __init__(self, raw_html: str) -> None:
+        self.raw_html = raw_html
+        self.soup = BeautifulSoup(raw_html, "html.parser")
+
+    @cached_property
+    def movies(self) -> List[Movie]:
+        movies = []
+        for movie in self.soup.find(attrs={"class": "b-content__inline_items"}).find_all(
+            attrs={"class": "b-content__inline_item"},
+        ):
+            cover_section = movie.find(attrs={"class": "b-content__inline_item-cover"})
+            link_section = movie.find(attrs={"class": "b-content__inline_item-link"})
+            movie_link_url_tag = link_section.find("a")
+
+            movies.append(
+                Movie(
+                    id=movie.get("data-id"),
+                    title=movie_link_url_tag.text.strip(),
+                    poster_preview_url=cover_section.find("img").get("src"),
+                    additional_information=link_section.find("div").text.strip(),
+                    page_url=movie_link_url_tag.get("href"),
+                    cover_text=cover_section.text.strip(),
+                ),
+            )
+        return movies

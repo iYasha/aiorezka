@@ -12,7 +12,7 @@ from aiorezka.backend.movie import RezkaMovie
 from aiorezka.backend.movie_detail import RezkaMovieDetail
 from aiorezka.cache import DiskCacheThreadProvider, QueryCache
 from aiorezka.cli import StatsThread
-from aiorezka.utils import retry
+from aiorezka.utils import HTTPError, retry
 
 
 def get_trailer_url(movie_id: int) -> dict:
@@ -187,31 +187,30 @@ class RezkaAPI:
         """
 
         :param headers:
-        :param cache_rebuild: bool - rebuild cache on start in DiskCacheThreadProvider
+        :param rebuild_cache: bool - rebuild cache on start in DiskCacheThreadProvider
+        :param request_params: dict - params for aiohttp.ClientSession.request
         """
-        self.http_session = RezkaSession(raise_for_status=self.raise_for_status)
+        self.http_session = RezkaSession(raise_for_status=self.raise_for_status, **kwargs.get("request_params", {}))
         self.fake = faker.Faker()
         self._headers = headers or {}
         if aiorezka.use_cache:
             self.cache = QueryCache(aiorezka.cache_directory)
             self.cache_provider = DiskCacheThreadProvider(
                 self.cache,
-                do_cache_rebuild=kwargs.get("cache_rebuild", True),
+                rebuild_cache=kwargs.get("rebuild_cache", True),
             )
 
     @classmethod
     async def raise_for_status(cls, response: RezkaResponse) -> None:
         if not 200 <= response.status < 300:
-            resp_content = await response.read()
+            response_content = await response.read()
             StatsThread.error_responses += 1
-            # TODO: Create custom exception and use it inside retry decorator to display only reason and status
-            is_service_unavailable = response.status == 503
-            exception_message = (
-                f"Url: {response.request_info.url}\nStatus: {response.status}\nReason: {response.reason}"
+            raise HTTPError(
+                status_code=response.status,
+                headers=response.headers,
+                reason=response.reason,
+                text=response_content.decode(),
             )
-            if not is_service_unavailable:
-                exception_message += f"\nContent: {resp_content}"
-            raise Exception(exception_message)
 
     @property
     def fake_headers(self) -> Dict[str, str]:

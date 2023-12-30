@@ -39,7 +39,7 @@ class QueryCache:
         if not os.path.exists(self.disk_cache_path):
             os.makedirs(self.disk_cache_path)
         self.cache = {}
-        self.expired_cache = set()  # TODO: maybe we should rename it to cache_to_remove?
+        self.expired_cache = set()
 
     def remove_garbage(self, query: str) -> str:
         return query.translate(self.garbage).lower()
@@ -94,7 +94,7 @@ class DiskCacheThreadProvider(threading.Thread):
     metadata_extension = ".metadata"
     logger = get_logger("aiorezka.cache.DiskCacheThreadProvider")
 
-    def __init__(self, cache: QueryCache, *, do_cache_rebuild: bool = True) -> None:
+    def __init__(self, cache: QueryCache, *, rebuild_cache: bool = True) -> None:
         super().__init__()
         self.cache = cache
 
@@ -102,7 +102,7 @@ class DiskCacheThreadProvider(threading.Thread):
         self.sleep = threading.Event()
 
         self.already_stored = set()
-        self.do_cache_rebuild = do_cache_rebuild
+        self.cache_rebuilt = not rebuild_cache
 
     async def store_metadata(self, cache_key: str, value: TTLObject) -> None:
         metadata_path = os.path.join(self.cache.disk_cache_path, f"{cache_key}{self.metadata_extension}")
@@ -175,14 +175,14 @@ class DiskCacheThreadProvider(threading.Thread):
             cache_path = os.path.join(self.cache.disk_cache_path, cache_file)
             tasks.append(self.check_if_expired_and_remove(now, cache_path, semaphore))
         loop.run_until_complete(asyncio.gather(*tasks))
-        self.logger.info(f"[Memcache] Cache rebuilded in {time.time() - now:.2f} seconds!")
+        self.cache_rebuilt = True
+        self.logger.info(f"Cache rebuilt in {time.time() - now:.2f} seconds!")
 
     def run(self) -> None:
         loop = self._get_event_loop()
-        # TODO: Here is a bug. If cache rebuild takes more time than Main Thread will be executed, then no items will be stored on disk.
-        if self.do_cache_rebuild:
-            self.cache_rebuild(loop)
         while not self.stop_flag.is_set():
+            if not self.cache_rebuilt:
+                self.cache_rebuild(loop)
             self.sleep.wait(timeout=10)
             self.remove_expired_cache()
             tasks = []
@@ -195,10 +195,10 @@ class DiskCacheThreadProvider(threading.Thread):
                 tasks.append(self.store_cache_to_disk(key, value))
                 tasks.append(self.store_metadata(key, value))
             loop.run_until_complete(asyncio.gather(*tasks))
-            self.logger.info(f"[Memcache] {_items_to_store} items stored!")
+            self.logger.info(f"{_items_to_store} items stored!")
             if memcache_size > self.cache.memcache_size:
                 self.cache.cache.clear()
-                self.logger.info(f"[Memcache] Flushing memcache! {memcache_size} items flushed!")
+                self.logger.info(f"Flushing memcache! {memcache_size} items flushed!")
 
     def stop(self) -> "DiskCacheThreadProvider":
         self.stop_flag.set()
