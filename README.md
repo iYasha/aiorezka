@@ -2,8 +2,16 @@
 
 ## Installation
 
+### Without cache
 ```bash
 pip install aiorezka
+```
+
+### With cache
+_It's recommended to use cache, because it will reduce load on Rezka API._
+
+```bash
+pip install aiorezka[request_cache]
 ```
 
 ## Usage
@@ -56,10 +64,9 @@ aiorezka.retry_delay = 2
 You can configure cache for requests. By default, it will use `aiorezka.cache.QueryCache` + `aiorezka.cache.DiskCacheThreadProvider` with 1 day TTL.
 Cache will periodically save to disk, so you can use it between restarts.
 
-_It's recommended to use cache, because it will reduce load on Rezka API._
 
 #### use_cache
-Enable or disable cache. By default, it's enabled.
+Enable or disable cache. By default, it's disabled.
 ```python
 import aiorezka
 
