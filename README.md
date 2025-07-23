@@ -30,6 +30,33 @@ asyncio.run(main())
 ```
 You can find more examples in [examples](examples) directory.
 
+## Download TV series
+1. Install [aria2](https://aria2.github.io/) and [ffmpeg](https://ffmpeg.org/).
+2. Install downloader extras for `aiorezka`:
+```bash
+pip install aiorezka[downloader]
+```
+3. Run download process:
+```python
+python -m aiorezka -u https://rezka.ag/cartoons/comedy/2136-rik-i-morti-2013-latest.html -a Сыендук -s 1
+```
+
+```python
+Aiorezka CLI
+
+options:
+  -h, --help            show this help message and exit
+  -v, --version         show program's version number and exit
+  -u URL, --url URL     URL of the movie or TV series to download. Can be full
+                        URL or just urn (e.g. /films/series/12345.html)
+  -p PATH, --path PATH  Path to save downloaded files (default: current
+                        directory)
+  -s SEASON, --season SEASON
+                        Season number for TV series (default: 1)
+  -a AUDIO_TRACK, --audio-track AUDIO_TRACK
+                        Preferred audio track for TV series
+```
+
 ## Configuration
 ### Hostname configuration
 You can configure hostname for requests. By default it will use `rezka.ag` hostname.

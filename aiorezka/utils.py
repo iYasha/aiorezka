@@ -87,6 +87,8 @@ class StreamDecoder:
 
     @classmethod
     def decode(cls, base64_encoded_stream_original: str) -> Dict[str, Dict[Union[Literal["hls", "mp4"]], str]]:
+        if base64_encoded_stream_original is None:
+            raise ValueError("base64_encoded_stream_original cannot be None")
         try:
             base64_decoded_stream = cls._decode_stream_base64(base64_encoded_stream_original)
         except Exception as e:

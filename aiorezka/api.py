@@ -8,6 +8,7 @@ from aiohttp import ClientResponse, ClientSession
 from aiohttp.typedefs import StrOrURL
 
 import aiorezka
+from aiorezka.backend.downloader import RezkaDownloader
 from aiorezka.backend.movie import RezkaMovie
 from aiorezka.backend.movie_detail import RezkaMovieDetail
 from aiorezka.backend.stream import RezkaStream
@@ -101,6 +102,10 @@ class RezkaAPI:
     @cached_property
     def stream(self) -> RezkaStream:
         return RezkaStream(self)
+
+    @cached_property
+    def downloader(self) -> RezkaDownloader:
+        return RezkaDownloader(self)
 
     async def __aenter__(self) -> "RezkaAPI":
         if aiorezka.use_cache:

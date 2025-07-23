@@ -1,23 +1,21 @@
 [tool.poetry]
 name = "aiorezka"
-dynamic = ["version"]
+version = "1.3.0"
 description = ""
 authors = ["iYasha <33287747+iYasha@users.noreply.github.com>"]
 readme = "README.md"
 
-[tool.setuptools.dynamic]
-version = { attr = "aiorezka.__version__" }
-
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pydantic = "^2.5.3"
 aiohttp = "^3.9.1"
 beautifulsoup4 = "^4.11.1"
 faker = "^21.0.0"
-aiofiles = { version="^23.2.1", optional=true }
+aiofiles = "^23.2.1"
+yt-dlp = {extras = ["aria2c"], version = "^2025.7.21", optional = true }
 
 [tool.poetry.extras]
-request_cache = ["aiofiles"]
+downloader = ["yt-dlp"]
 
 [build-system]
 requires = ["poetry-core"]
