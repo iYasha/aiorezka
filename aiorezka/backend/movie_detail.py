@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple
 
 import aiorezka
 from aiorezka.factories import MovieDetailFactory
+from aiorezka.logger import get_logger
 from aiorezka.schemas import Movie, MovieDetail
 
 if TYPE_CHECKING:
@@ -10,6 +11,8 @@ if TYPE_CHECKING:
 
 
 class RezkaMovieDetail:
+    logger = get_logger("aiorezka.backend.movie_detail")
+
     def __init__(self, api_client: "RezkaAPI") -> None:
         self.api_client = api_client
 
@@ -30,9 +33,10 @@ class RezkaMovieDetail:
             return None
         return await self.api_client.cache.get(movie_page_url)
 
-    async def get(self, movie_page_url: str) -> Optional[MovieDetail]:
+    async def get(self, movie_page_url: str, use_cache: bool = True) -> Optional[MovieDetail]:
         item = await self._get_cache(movie_page_url)
-        if item:
+        if use_cache and item:
+            self.logger.debug("Cache hit for %s", movie_page_url)
             return item
         async with self.api_client.http_session.get(
             movie_page_url,

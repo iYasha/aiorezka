@@ -1,6 +1,8 @@
 import logging
 import os
 
+__version__ = "1.3.0"
+
 # Network settings
 host: str = os.getenv("REZKA_HOSTNAME", "https://rezka.ag")
 concurrency_limit: int = int(os.getenv("REZKA_CONCURRENCY_LIMIT", 60))

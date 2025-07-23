@@ -4,7 +4,7 @@
 name = "aiofiles"
 version = "23.2.1"
 description = "File support for asyncio."
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "aiofiles-23.2.1-py3-none-any.whl", hash = "sha256:19297512c647d4b27a2cf7c34caa7e405c0d60b5560618a29a9fe027b18b0107"},
@@ -663,10 +663,7 @@ files = [
 idna = ">=2.0"
 multidict = ">=4.0"
 
-[extras]
-request-cache = ["aiofiles"]
-
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "f44848b00da79650173324a8164aa1dfe7717efcebe0b82146035d620455c5b8"
+content-hash = "b63a8bcd9267f3b859768177e79de29b99794d015aebdb1ce47ae4ea0807c52d"

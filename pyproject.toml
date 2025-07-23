@@ -1,9 +1,12 @@
 [tool.poetry]
 name = "aiorezka"
-version = "1.2.0"
+dynamic = ["version"]
 description = ""
 authors = ["iYasha <33287747+iYasha@users.noreply.github.com>"]
 readme = "README.md"
+
+[tool.setuptools.dynamic]
+version = { attr = "aiorezka.__version__" }
 
 [tool.poetry.dependencies]
 python = "^3.8"
