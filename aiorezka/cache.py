@@ -176,7 +176,7 @@ class DiskCacheThreadProvider(threading.Thread):
             tasks.append(self.check_if_expired_and_remove(now, cache_path, semaphore))
         loop.run_until_complete(asyncio.gather(*tasks))
         self.cache_rebuilt = True
-        self.logger.info(f"Cache rebuilt in {time.time() - now:.2f} seconds!")
+        self.logger.debug(f"Cache rebuilt in {time.time() - now:.2f} seconds!")
 
     def run(self) -> None:
         loop = self._get_event_loop()
@@ -195,10 +195,10 @@ class DiskCacheThreadProvider(threading.Thread):
                 tasks.append(self.store_cache_to_disk(key, value))
                 tasks.append(self.store_metadata(key, value))
             loop.run_until_complete(asyncio.gather(*tasks))
-            self.logger.info(f"{_items_to_store} items stored!")
+            self.logger.debug(f"{_items_to_store} items stored!")
             if memcache_size > self.cache.memcache_size:
                 self.cache.cache.clear()
-                self.logger.info(f"Flushing memcache! {memcache_size} items flushed!")
+                self.logger.debug(f"Flushing memcache! {memcache_size} items flushed!")
 
     def stop(self) -> "DiskCacheThreadProvider":
         self.stop_flag.set()

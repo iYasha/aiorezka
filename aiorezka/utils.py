@@ -1,6 +1,7 @@
 import asyncio
+import base64
 import re
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Dict, Literal, Optional, Tuple, Type, Union
 
 from aiohttp.client_exceptions import ClientError
 from aiohttp.web_exceptions import HTTPException
@@ -66,3 +67,53 @@ def retry(
         return wrapper
 
     return decorator
+
+
+class StreamDecoder:
+    stream_separator = "//_//"
+    trash_list = ["$$#!!@#!@##", "^^^!@##!!##", "####^!!##!@@", "@@@@@!##!^^^", "$$!!@$$@^!@#$$@"]
+
+    @classmethod
+    def _decode_stream_base64(cls, stream_encoded: str) -> str:
+        stream_encoded = stream_encoded[2:]
+        for _ in range(2):
+            stream_encoded = stream_encoded.replace(cls.stream_separator, "")
+            for value in cls.trash_list:
+                stream_encoded = stream_encoded.replace(
+                    base64.b64encode(value.encode()).decode(),
+                    "",
+                )
+        return base64.b64decode(stream_encoded.encode()).decode()
+
+    @classmethod
+    def decode(cls, base64_encoded_stream_original: str) -> Dict[str, Dict[Union[Literal["hls", "mp4"]], str]]:
+        if base64_encoded_stream_original is None:
+            raise ValueError("base64_encoded_stream_original cannot be None")
+        try:
+            base64_decoded_stream = cls._decode_stream_base64(base64_encoded_stream_original)
+        except Exception as e:
+            raise Exception(base64_encoded_stream_original) from e
+        split_by_quality = base64_decoded_stream.split(",")
+        quality_pattern = re.compile(r"^\[\d+p(?:\s\w*)?\]")
+        streams = {}
+        for stream in split_by_quality:
+            re_quality_results = quality_pattern.findall(stream)
+            if not re_quality_results:
+                continue
+            quality = re_quality_results[0].replace("[", "").replace("]", "")
+            stream_urls_str = stream.replace(re_quality_results[0], "")
+            try:
+                stream_urls = map(
+                    str.strip,
+                    stream_urls_str.split(
+                        " or ",
+                    ),
+                )
+                mp4_stream = next(filter(lambda x: x.endswith(".mp4"), stream_urls), None)
+                streams[quality] = {
+                    "hls": mp4_stream + ":hls:manifest.m3u8",
+                    "mp4": mp4_stream,
+                }
+            except Exception as e:
+                raise Exception(stream_urls_str) from e
+        return streams
