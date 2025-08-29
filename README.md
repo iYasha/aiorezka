@@ -32,7 +32,11 @@ You can find more examples in [examples](examples) directory.
 
 ## Download TV series
 1. Install [aria2](https://aria2.github.io/) and [ffmpeg](https://ffmpeg.org/).
-2. Install downloader extras for `aiorezka`:
+2. Install yt-dlp:
+```bash
+pip install yt-dlp
+```
+3. Install downloader extras for `aiorezka`:
 ```bash
 pip install aiorezka[downloader]
 ```

@@ -1,7 +1,7 @@
 import logging
 import os
 
-__version__ = "1.3.0"
+__version__ = "1.3.1"
 
 # Network settings
 host: str = os.getenv("REZKA_HOSTNAME", "https://rezka.ag")
