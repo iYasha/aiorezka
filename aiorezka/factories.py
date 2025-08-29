@@ -152,26 +152,22 @@ class MovieDetailFactory:
 
     @cached_property
     def available_audio_tracks(self) -> List[AudioTrack]:
-        # get available audio tracks
-        audio_tracks_table = self.soup.find(attrs={"id": "translators-list"})
-        return (
-            [
-                {"audio_track_id": x.get("data-translator_id"), "audio_track_name": x.text.strip()}
-                for x in audio_tracks_table.find_all("li")
-            ]
-            if audio_tracks_table
-            else []
-        )
-        # TODO: FIXME
-        # audio_tracks_table = self.soup.find(attrs={"id": "translators-list"})
-        # return (
-        #     [
-        #         {"audio_track_id": x.get("data-translator_id"), "audio_track_name": x.text.strip()}
-        #         for x in audio_tracks_table.find_all("a")
-        #     ]
-        #     if audio_tracks_table
-        #     else []
-        # )
+        audio_tracks_root = self.soup.find(id="translators-list")
+        if not audio_tracks_root:
+            return []
+
+        candidates = audio_tracks_root.select('[data-translator_id], [data-translator-id]')
+
+        tracks = []
+        seen = set()
+        for el in candidates:
+            tid = el.get("data-translator_id") or el.get("data-translator-id")
+            name = el.get_text(strip=True)
+            if tid and name and tid not in seen:
+                tracks.append({"audio_track_id": tid, "audio_track_name": name})
+                seen.add(tid)
+
+        return tracks
 
     @cached_property
     def seasons(self) -> List[MovieSeason]:
